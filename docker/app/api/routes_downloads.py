@@ -8,7 +8,7 @@ import json
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
-from ..core.episode_index import best_source_for, load_episode_index
+from ..core.episode_index import audio_lang, best_source_for, load_episode_index
 from ..core.models import DownloadEstimate, DownloadRequest
 from ..download_manager import manager
 
@@ -54,7 +54,7 @@ def estimate(req: DownloadRequest) -> DownloadEstimate:
                 if a.get("title") == req.arc_title), None)
     if not arc:
         raise HTTPException(404, f"Arc {req.arc_title!r} not found")
-    total = matched = missing = 0
+    total = matched = missing = lang_mismatch = 0
     for ep in arc.get("episodes", []):
         if ep.get("num") not in req.episode_nums:
             continue
@@ -62,9 +62,15 @@ def estimate(req: DownloadRequest) -> DownloadEstimate:
         if src:
             matched += 1
             total += int(src.get("size_bytes", 0) or 0)
+            if (req.source == "onepace"
+                    and audio_lang(src.get("version", ""))
+                    != audio_lang(req.version)):
+                lang_mismatch += 1
         else:
             missing += 1
-    return DownloadEstimate(total_bytes=total, matched=matched, missing=missing)
+    return DownloadEstimate(
+        total_bytes=total, matched=matched, missing=missing,
+        language_mismatch=lang_mismatch)
 
 
 @router.get("")

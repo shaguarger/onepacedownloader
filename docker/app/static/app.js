@@ -351,6 +351,10 @@ async function downloadSelected() {
   const missingNote = est.missing
     ? `<div class="row"><span class="key">Unavailable</span> <span class="val" style="color:var(--red-soft)">${est.missing} episode${est.missing !== 1 ? "s" : ""} have no ${esc(activeSource)} source — will be skipped</span></div>`
     : "";
+  const otherLang = version === "English Subtitles" ? "English" : "Japanese";
+  const langNote = est.language_mismatch
+    ? `<div class="row"><span class="key">Audio</span> <span class="val" style="color:var(--red-soft)">${est.language_mismatch} episode${est.language_mismatch !== 1 ? "s" : ""} have no ${esc(version)} — only ${otherLang} audio is available and will be downloaded instead</span></div>`
+    : "";
 
   confirmDialog({
     title: `Download ${est.matched} episode${est.matched !== 1 ? "s" : ""}`,
@@ -361,6 +365,7 @@ async function downloadSelected() {
         <div class="row"><span class="key">Version</span> <span class="val">${esc(version)}</span></div>
         <div class="row"><span class="key">Quality</span> <span class="val">${esc(quality)}</span></div>
         ${missingNote}
+        ${langNote}
         <div class="row"><span class="key">Total size</span> <span class="size-big">${sizeText}</span></div>
       </div>`,
     okText: "Start download",

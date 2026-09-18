@@ -846,6 +846,12 @@ def _quality_rank(q: str) -> int:
     return int(m_.group(1)) if m_ else 0
 
 
+def _audio_lang(version: str) -> str:
+    """Audio language for a version: 'ja' for the original-Japanese
+    subtitled cut, 'en' for the English dubs."""
+    return "ja" if version == "English Subtitles" else "en"
+
+
 def _fmt_size(bytes_: int) -> str:
     mb = bytes_ / 1024 / 1024
     return f"{mb / 1024:.2f} GB" if mb >= 1024 else f"{mb:.0f} MB"
@@ -4904,17 +4910,32 @@ class BatchDownloadDialog(ModalOverlay):
         qual = self.quality_var.get()
         total_bytes = 0
         skipped = 0
+        lang_mismatch = 0
         for ep in self.episodes:
             best = App._best_source_for(ep, self.source, ver, qual)
             if best:
                 total_bytes += int(best.get("size_bytes", 0))
+                # _best_source_for falls back across versions — flag any
+                # episode whose audio language differs from the one chosen.
+                if (self.source == "onepace"
+                        and _audio_lang(best.get("version", ""))
+                        != _audio_lang(ver)):
+                    lang_mismatch += 1
             else:
                 skipped += 1
         self.size_lbl.configure(
             text=_fmt_size(total_bytes) if total_bytes else "—")
-        self.skipped_lbl.configure(
-            text=(f"⚠ {skipped} episode(s) have no matching source — "
-                   "will be skipped." if skipped else ""))
+        notes = []
+        if skipped:
+            notes.append(f"⚠ {skipped} episode(s) have no matching source — "
+                         "will be skipped.")
+        if lang_mismatch:
+            other = "Japanese" if _audio_lang(ver) == "en" else "English"
+            notes.append(
+                f"⚠ {lang_mismatch} episode(s) have no {ver} — only "
+                f"{other} audio is available and will be downloaded "
+                "instead.")
+        self.skipped_lbl.configure(text="  ".join(notes))
 
     def _confirm(self) -> None:
         self.chosen_version = self.version_var.get()

@@ -98,6 +98,12 @@ def quality_rank(q: str) -> int:
     return int(m.group(1)) if m else 0
 
 
+def audio_lang(version: str) -> str:
+    """Audio language for a version: 'ja' for the original-Japanese
+    subtitled cut, 'en' for the English dubs."""
+    return "ja" if version == "English Subtitles" else "en"
+
+
 def best_source_for(ep: dict, kind: str, version_pref: str,
                     quality_pref: str) -> dict | None:
     """Pick the best source for an episode, falling back across quality

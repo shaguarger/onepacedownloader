@@ -48,6 +48,7 @@ class DownloadEstimate(BaseModel):
     total_bytes: int = 0
     matched: int = 0
     missing: int = 0
+    language_mismatch: int = 0
 
 
 class UsenetSendRequest(BaseModel):
